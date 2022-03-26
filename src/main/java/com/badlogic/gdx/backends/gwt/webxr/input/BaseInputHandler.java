@@ -191,7 +191,7 @@ public class BaseInputHandler implements InputHandler {
             XRPose targetRayPose = frame.getPose(targetRaySpace, refSpace);
 
             Matrix4 transform = MatrixUtils.buildMatrix4(targetRayPose.getTransform().matrix, input.transform);
-            listener.update(input, transform);
+            listener.updateTransform(input, transform);
         }
     }
 
@@ -223,7 +223,7 @@ public class BaseInputHandler implements InputHandler {
         }
 
         @Override
-        public boolean update(Controller controller, Matrix4 transform) {
+        public boolean updateTransform(Controller controller, Matrix4 transform) {
             return false;
         }
 

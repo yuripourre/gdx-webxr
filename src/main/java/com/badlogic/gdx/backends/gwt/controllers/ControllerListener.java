@@ -1,7 +1,6 @@
 package com.badlogic.gdx.backends.gwt.controllers;
 
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Vector3;
 
 /** Registered with an {@link InputHandler} instance to receive events.
   * @author Nathan Sweet
@@ -43,7 +42,7 @@ public interface ControllerListener {
      * @param transform of the controller in meters
      *
      * @return whether to hand the event to other listeners. */
-    boolean update(Controller controller, Matrix4 transform);
+    boolean updateTransform(Controller controller, Matrix4 transform);
 
     /** The trigger on the {@link Controller} was pressed. The trigger is controller specific.
      *
