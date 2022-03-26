@@ -1,5 +1,6 @@
 package com.badlogic.gdx.backends.gwt.controllers;
 
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 
 /** Registered with an {@link InputHandler} instance to receive events.
@@ -39,10 +40,10 @@ public interface ControllerListener {
     /** The position of the {@link Controller} moved. This method is specific for VR is controllers.
      *
      * @param controller
-     * @param position of the controller in meters
+     * @param transform of the controller in meters
      *
      * @return whether to hand the event to other listeners. */
-    boolean moved (Controller controller, Vector3 position);
+    boolean update(Controller controller, Matrix4 transform);
 
     /** The trigger on the {@link Controller} was pressed. The trigger is controller specific.
      *

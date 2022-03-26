@@ -2,7 +2,6 @@ package com.badlogic.gdx.backends.gwt.webxr.input;
 
 import com.badlogic.gdx.backends.gwt.controllers.ControllerListener;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.backends.gwt.webxr.MatrixUtils;
 import com.badlogic.gdx.backends.gwt.controllers.Controller;
 import com.google.gwt.webxr.XRFrame;
@@ -193,9 +192,9 @@ public class BaseInputHandler implements InputHandler {
             XRPose targetRayPose = frame.getPose(targetRaySpace, refSpace);
 
             Matrix4 transform = MatrixUtils.buildMatrix4(targetRayPose.getTransform().matrix, tmpMatrix);
-            transform.getTranslation(input.position);
+            input.transform.set(transform);
 
-            listener.moved(input, input.position);
+            listener.update(input, input.transform);
         }
     }
 
@@ -227,7 +226,7 @@ public class BaseInputHandler implements InputHandler {
         }
 
         @Override
-        public boolean moved(Controller controller, Vector3 position) {
+        public boolean update(Controller controller, Matrix4 transform) {
             return false;
         }
 
