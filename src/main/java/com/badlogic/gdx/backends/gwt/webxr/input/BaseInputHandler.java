@@ -21,7 +21,6 @@ import java.util.Set;
 public class BaseInputHandler implements InputHandler {
 
     private Set<XRController> inputSources = new LinkedHashSet<>();
-    private static Matrix4 tmpMatrix = new Matrix4();
 
     private ControllerListener listener = DUMMY_CONTROLLER_LISTENER;
 
@@ -191,10 +190,8 @@ public class BaseInputHandler implements InputHandler {
             XRSpace targetRaySpace = inputSource.getTargetRaySpace();
             XRPose targetRayPose = frame.getPose(targetRaySpace, refSpace);
 
-            Matrix4 transform = MatrixUtils.buildMatrix4(targetRayPose.getTransform().matrix, tmpMatrix);
-            input.transform.set(transform);
-
-            listener.update(input, input.transform);
+            Matrix4 transform = MatrixUtils.buildMatrix4(targetRayPose.getTransform().matrix, input.transform);
+            listener.update(input, transform);
         }
     }
 
