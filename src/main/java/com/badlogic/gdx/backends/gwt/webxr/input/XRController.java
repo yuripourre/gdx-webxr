@@ -21,4 +21,12 @@ public class XRController extends GwtController {
     public XRInputSource getInputSource() {
         return inputSource;
     }
+
+    public int getButtonsSize() {
+        return inputSource.getGamepad().getButtons().length;
+    }
+
+    public boolean getButtonsState(int button) {
+        return inputSource.getGamepad().getButtons().getAt(button).isPressed();
+    }
 }

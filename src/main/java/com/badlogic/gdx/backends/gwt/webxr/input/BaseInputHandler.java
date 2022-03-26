@@ -1,9 +1,9 @@
 package com.badlogic.gdx.backends.gwt.webxr.input;
 
-import com.badlogic.gdx.backends.gwt.controllers.ControllerListener;
-import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.backends.gwt.webxr.MatrixUtils;
 import com.badlogic.gdx.backends.gwt.controllers.Controller;
+import com.badlogic.gdx.backends.gwt.controllers.ControllerListener;
+import com.badlogic.gdx.backends.gwt.webxr.MatrixUtils;
+import com.badlogic.gdx.math.Matrix4;
 import com.google.gwt.webxr.XRFrame;
 import com.google.gwt.webxr.XRInputSource;
 import com.google.gwt.webxr.XRInputSourceEvent;
@@ -14,13 +14,16 @@ import com.google.gwt.webxr.XRSession;
 import com.google.gwt.webxr.XRSpace;
 import elemental2.dom.Event;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class BaseInputHandler implements InputHandler {
 
     private Set<XRController> inputSources = new LinkedHashSet<>();
+    private Map<String, Boolean[]> buttonStates = new HashMap<>();
 
     private ControllerListener listener = DUMMY_CONTROLLER_LISTENER;
 
@@ -66,6 +69,8 @@ public class BaseInputHandler implements InputHandler {
 
         XRController input = new XRController(index, name, source);
         inputSources.add(input);
+        String id = getIdentifier(input.getInputSource());
+        buttonStates.put(id, new Boolean[input.getInputSource().getGamepad().getButtons().length]);
 
         input.connected = true;
         listener.connected(input);
@@ -87,11 +92,15 @@ public class BaseInputHandler implements InputHandler {
         for (XRController input : inputSources) {
             // Currently, it only removes based on handedness.
             // If for some reason there are two left or right controllers, they might be in desync
-            if (input.getInputSource().getHandedness().equals(source.getHandedness())) {
+            if (getIdentifier(input.getInputSource()).equals(getIdentifier(source))) {
                 return input;
             }
         }
         return null;
+    }
+
+    private String getIdentifier(XRInputSource source) {
+        return source.getHandedness();
     }
 
     private XRSession.OnselectFn onSelect() {
@@ -192,6 +201,27 @@ public class BaseInputHandler implements InputHandler {
 
             Matrix4 transform = MatrixUtils.buildMatrix4(targetRayPose.getTransform().matrix, input.transform);
             listener.updateTransform(input, transform);
+            checkButtonState(input);
+        }
+    }
+
+    private void checkButtonState(XRController input) {
+        String id = getIdentifier(input.getInputSource());
+        Boolean[] states = buttonStates.get(id);
+        if (states == null || listener == null) {
+            return;
+        }
+
+        for (int i = 0; i < states.length; i++) {
+            boolean state = input.getButtonsState(i);
+            if (state != states[i]) {
+                if (state) {
+                    listener.buttonDown(input, i);
+                } else {
+                    listener.buttonUp(input, i);
+                }
+                states[i] = state;
+            }
         }
     }
 
