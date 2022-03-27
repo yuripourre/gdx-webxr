@@ -46,12 +46,19 @@ public abstract class GwtXRApplication extends GwtApplication {
         setupXRButton();
     }
 
+    @Override
+    public GwtXRApplicationConfiguration getConfig () {
+        return getXRConfig();
+    }
+
+    public abstract GwtXRApplicationConfiguration getXRConfig();
+
     public void setupXRButton() {
         try {
+            GwtXRApplicationConfiguration configuration = (GwtXRApplicationConfiguration) config;
             xrNavigator = WebXRNavigator.of(navigator);
-            xrNavigator.xr.isSessionSupported(XRSessionMode.IMMERSIVE_VR).then(isSupported -> {
-                //document.querySelector("#enter-ar").addEventListener("click", evt -> initVR());
-                document.querySelector("#enter-vr").addEventListener("click", evt -> initVR());
+            xrNavigator.xr.isSessionSupported(configuration.immersiveMode).then(isSupported -> {
+                document.querySelector("#enter-vr").addEventListener("click", evt -> initXR());
                 return null;
             }, p0 -> {
                 onNoXRDevice();
@@ -65,9 +72,10 @@ public abstract class GwtXRApplication extends GwtApplication {
         }
     }
 
-    private void initVR() {
+    private void initXR() {
         try {
-            xrNavigator.xr.requestSession(XRSessionMode.IMMERSIVE_VR).then(session -> {
+            GwtXRApplicationConfiguration configuration = (GwtXRApplicationConfiguration) config;
+            xrNavigator.xr.requestSession(configuration.immersiveMode).then(session -> {
                 startSession(session);
                 onSessionStarted(session);
                 return null;
