@@ -22,18 +22,18 @@ import jsinterop.annotations.JsType;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL)
 public interface XRView {
-  // TODO method changed comparing to the original repo
+  // TODO Update this method at the original repo
   @JsProperty
   String getEye();
 
-  // TODO method changed comparing to the original repo
+  // TODO Update this method at the original repo
   @JsProperty
   Float32Array getProjectionMatrix();
 
   @JsProperty
   double getRecommendedViewportScale();
 
-  // TODO method changed comparing to the original repo
+  // TODO Update this method at the original repo
   @JsProperty
   XRRigidTransform getTransform();
 

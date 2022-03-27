@@ -31,14 +31,14 @@ public interface XRInputSource {
   @JsProperty
   XRSpace getGripSpace();
 
-  // TODO changed comparing to the original code
+  // TODO Update this method at the original repo
   @JsProperty
   String getHandedness();
 
   @JsProperty
   JsArray<String> getProfiles();
 
-  // TODO changed comparing to the original code
+  // TODO Update this method at the original repo
   @JsProperty
   String getTargetRayMode();
 

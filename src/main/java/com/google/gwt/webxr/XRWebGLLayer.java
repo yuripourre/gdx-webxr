@@ -43,7 +43,7 @@ public class XRWebGLLayer implements XRLayer {
 
   public native double getNativeFramebufferScaleFactor();
 
-  // TODO method changed comparing to the original repo
+  // TODO Update this method at the original repo
   public native XRViewport getViewport(XRView view);
 
   public native void removeEventListener(

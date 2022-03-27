@@ -2,6 +2,7 @@ package com.badlogic.gdx.backends.gwt.webxr.input;
 
 import com.badlogic.gdx.backends.gwt.controllers.Controller;
 import com.badlogic.gdx.backends.gwt.controllers.ControllerListener;
+import com.badlogic.gdx.backends.gwt.controllers.GamepadButton;
 import com.badlogic.gdx.backends.gwt.webxr.MatrixUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.google.gwt.webxr.XRFrame;
@@ -15,15 +16,12 @@ import com.google.gwt.webxr.XRSpace;
 import elemental2.dom.Event;
 
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class BaseInputHandler implements InputHandler {
 
-    private Set<XRController> inputSources = new LinkedHashSet<>();
-    private Map<String, Boolean[]> buttonStates = new HashMap<>();
+    private Map<String, XRController> inputSources = new HashMap<>();
 
     private ControllerListener listener = DUMMY_CONTROLLER_LISTENER;
 
@@ -67,10 +65,9 @@ public class BaseInputHandler implements InputHandler {
         int index = inputSources.size();
         String name = source.getHandedness();
 
+        String id = getIdentifier(source);
         XRController input = new XRController(index, name, source);
-        inputSources.add(input);
-        String id = getIdentifier(input.getInputSource());
-        buttonStates.put(id, new Boolean[input.getInputSource().getGamepad().getButtons().length]);
+        inputSources.put(id, input);
 
         input.connected = true;
         listener.connected(input);
@@ -89,9 +86,9 @@ public class BaseInputHandler implements InputHandler {
     }
 
     private XRController findInput(XRInputSource source) {
-        for (XRController input : inputSources) {
+        for (XRController input : inputSources.values()) {
             // Currently, it only removes based on handedness.
-            // If for some reason there are two left or right controllers, they might be in desync
+            // If for some reason there are two left or right controllers, the last one will overwrite the first one
             if (getIdentifier(input.getInputSource()).equals(getIdentifier(source))) {
                 return input;
             }
@@ -189,7 +186,6 @@ public class BaseInputHandler implements InputHandler {
      * Code from https://github.com/immersive-web/webxr-samples/blob/main/input-tracking.html
      */
     public void updateInputSources(XRSession session, XRFrame frame, XRReferenceSpace refSpace) {
-
         for (XRInputSource inputSource : session.getInputSources().asList()) {
             XRController input = findInput(inputSource);
             if (input == null) {
@@ -201,26 +197,49 @@ public class BaseInputHandler implements InputHandler {
 
             Matrix4 transform = MatrixUtils.buildMatrix4(targetRayPose.getTransform().matrix, input.transform);
             listener.updateTransform(input, transform);
-            checkButtonState(input);
+            handleButtonState(inputSource);
+            handleAxisState(inputSource);
         }
     }
 
-    private void checkButtonState(XRController input) {
-        String id = getIdentifier(input.getInputSource());
-        Boolean[] states = buttonStates.get(id);
-        if (states == null || listener == null) {
+    private void handleButtonState(XRInputSource xrInputSource) {
+        String id = getIdentifier(xrInputSource);
+        XRController oldState = inputSources.get(id);
+
+        if (oldState == null || listener == null) {
             return;
         }
 
-        for (int i = 0; i < states.length; i++) {
-            boolean state = input.getButtonsState(i);
-            if (state != states[i]) {
-                if (state) {
-                    listener.buttonDown(input, i);
+        for (int i = 0; i < oldState.getButtonsSize(); i++) {
+            GamepadButton state = xrInputSource.getGamepad().getButtons().getAt(i);
+            GamepadButton oldButtonState = oldState.getButtonState(i);
+            // Should we handle isTouched?
+            if (state.isPressed() != oldButtonState.isPressed()) {
+                // Update the old state
+                oldState.setButtonState(i, state);
+                if (state.isPressed()) {
+                    listener.buttonDown(oldState, i);
                 } else {
-                    listener.buttonUp(input, i);
+                    listener.buttonUp(oldState, i);
                 }
-                states[i] = state;
+            }
+        }
+    }
+
+    private void handleAxisState(XRInputSource xrInputSource) {
+        String id = getIdentifier(xrInputSource);
+        XRController oldState = inputSources.get(id);
+
+        if (oldState == null || listener == null) {
+            return;
+        }
+
+        for (int i = 0; i < oldState.getAxisCount(); i++) {
+            Double value = xrInputSource.getGamepad().getAxes().getAt(i);
+            if (value != oldState.getAxis(i)) {
+                // Update the old state
+                oldState.setAxis(i, value);
+                listener.axisMoved(oldState, i, value.floatValue());
             }
         }
     }

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.webxr;
 
-// TODO Changed based on original code
+// TODO Update this class at the original repo
 public class XRHandedness {
   public static final String LEFT = "left";
   public static final String NONE = "none";

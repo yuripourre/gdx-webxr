@@ -21,19 +21,19 @@ import jsinterop.annotations.JsType;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL)
 public interface XRViewport {
-  // TODO This method was defined as double at the original repo
+  // TODO Update this method at the original repo
   @JsProperty
   int getHeight();
 
-  // TODO This method was defined as double at the original repo
+  // TODO Update this method at the original repo
   @JsProperty
   int getWidth();
 
-  // TODO This method was defined as double at the original repo
+  // TODO Update this method at the original repo
   @JsProperty
   int getX();
 
-  // TODO This method was defined as double at the original repo
+  // TODO Update this method at the original repo
   @JsProperty
   int getY();
 }

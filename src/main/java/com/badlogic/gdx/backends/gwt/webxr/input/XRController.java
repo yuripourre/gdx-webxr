@@ -1,8 +1,8 @@
 package com.badlogic.gdx.backends.gwt.webxr.input;
 
+import com.badlogic.gdx.backends.gwt.controllers.GamepadButton;
 import com.badlogic.gdx.backends.gwt.controllers.GwtController;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Vector3;
 import com.google.gwt.webxr.XRInputSource;
 
 public class XRController extends GwtController {
@@ -26,7 +26,19 @@ public class XRController extends GwtController {
         return inputSource.getGamepad().getButtons().length;
     }
 
-    public boolean getButtonsState(int button) {
-        return inputSource.getGamepad().getButtons().getAt(button).isPressed();
+    public GamepadButton getButtonState(int button) {
+        return inputSource.getGamepad().getButtons().getAt(button);
+    }
+
+    public boolean isButtonTouched(int button) {
+        return inputSource.getGamepad().getButtons().getAt(button).isTouched();
+    }
+
+    public void setButtonState(int button, GamepadButton state) {
+        inputSource.getGamepad().getButtons().setAt(button, state);
+    }
+
+    public void setAxis(int axis, Double value) {
+        inputSource.getGamepad().getAxes().setAt(axis, value);
     }
 }

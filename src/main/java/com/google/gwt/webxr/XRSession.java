@@ -75,7 +75,7 @@ public interface XRSession extends EventTarget {
 
   Promise<Void> end();
 
-  // TODO method changed comparing to the original repo
+  // TODO Update this method at the original repo
   @JsProperty
   JsArray<XRInputSource> getInputSources();
 
@@ -109,7 +109,7 @@ public interface XRSession extends EventTarget {
   @JsProperty
   XRRenderState getRenderState();
 
-  // TODO Changed on the original code
+  // TODO Update this method at the original repo
   @JsProperty
   String getVisibilityState();
 
