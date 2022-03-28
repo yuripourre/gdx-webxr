@@ -22,7 +22,7 @@ public class XRController extends GwtController {
         return inputSource;
     }
 
-    public int getButtonsSize() {
+    public int getButtonsCount() {
         return inputSource.getGamepad().getButtons().length;
     }
 

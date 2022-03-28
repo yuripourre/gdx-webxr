@@ -22,6 +22,7 @@ import java.util.Map;
 public class BaseInputHandler implements InputHandler {
 
     private Map<String, XRController> inputSources = new HashMap<>();
+    private Map<String, XRControllerState> inputStates = new HashMap<>();
 
     private ControllerListener listener = DUMMY_CONTROLLER_LISTENER;
 
@@ -68,6 +69,7 @@ public class BaseInputHandler implements InputHandler {
         String id = getIdentifier(source);
         XRController input = new XRController(index, name, source);
         inputSources.put(id, input);
+        inputStates.put(id, new XRControllerState(input));
 
         input.connected = true;
         listener.connected(input);
@@ -204,23 +206,25 @@ public class BaseInputHandler implements InputHandler {
 
     private void handleButtonState(XRInputSource xrInputSource) {
         String id = getIdentifier(xrInputSource);
-        XRController oldState = inputSources.get(id);
 
-        if (oldState == null || listener == null) {
+        XRController current = inputSources.get(id);
+        XRControllerState controllerState = inputStates.get(id);
+
+        if (current == null || controllerState == null || listener == null) {
             return;
         }
 
-        for (int i = 0; i < oldState.getButtonsSize(); i++) {
+        for (int i = 0; i < controllerState.buttonsPressed.length; i++) {
             GamepadButton state = xrInputSource.getGamepad().getButtons().getAt(i);
-            GamepadButton oldButtonState = oldState.getButtonState(i);
+            boolean pressed = controllerState.buttonsPressed[i];
             // Should we handle isTouched?
-            if (state.isPressed() != oldButtonState.isPressed()) {
+            if (state.isPressed() != pressed) {
                 // Update the old state
-                oldState.setButtonState(i, state);
+                controllerState.buttonsPressed[i] = state.isPressed();
                 if (state.isPressed()) {
-                    listener.buttonDown(oldState, i);
+                    listener.buttonDown(current, i);
                 } else {
-                    listener.buttonUp(oldState, i);
+                    listener.buttonUp(current, i);
                 }
             }
         }
@@ -228,18 +232,22 @@ public class BaseInputHandler implements InputHandler {
 
     private void handleAxisState(XRInputSource xrInputSource) {
         String id = getIdentifier(xrInputSource);
-        XRController oldState = inputSources.get(id);
 
-        if (oldState == null || listener == null) {
+        XRController current = inputSources.get(id);
+        XRControllerState controllerState = inputStates.get(id);
+
+        if (current == null || controllerState == null || listener == null) {
             return;
         }
 
-        for (int i = 0; i < oldState.getAxisCount(); i++) {
+        for (int i = 0; i < controllerState.axes.length; i++) {
             Double value = xrInputSource.getGamepad().getAxes().getAt(i);
-            if (value != oldState.getAxis(i)) {
-                // Update the old state
-                oldState.setAxis(i, value);
-                listener.axisMoved(oldState, i, value.floatValue());
+            float fValue = value.floatValue();
+            float oldValue = controllerState.axes[i];
+            // Should we handle isTouched?
+            if (fValue != oldValue) {
+                controllerState.axes[i] = fValue;
+                listener.axisMoved(current, i, fValue);
             }
         }
     }
