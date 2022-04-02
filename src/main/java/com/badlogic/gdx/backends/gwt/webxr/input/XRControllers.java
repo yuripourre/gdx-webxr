@@ -1,10 +1,10 @@
 package com.badlogic.gdx.backends.gwt.webxr.input;
 
-import com.badlogic.gdx.backends.gwt.controllers.Controller;
 import com.badlogic.gdx.backends.gwt.controllers.ControllerListener;
 import com.badlogic.gdx.backends.gwt.controllers.GamepadButton;
 import com.badlogic.gdx.backends.gwt.webxr.MatrixUtils;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.utils.Array;
 import com.google.gwt.webxr.XRFrame;
 import com.google.gwt.webxr.XRInputSource;
 import com.google.gwt.webxr.XRInputSourceEvent;
@@ -15,17 +15,19 @@ import com.google.gwt.webxr.XRSession;
 import com.google.gwt.webxr.XRSpace;
 import elemental2.dom.Event;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BaseInputHandler implements InputHandler {
+public class XRControllers implements XRControllerManager {
 
-    private Map<String, XRController> inputSources = new HashMap<>();
-    private Map<String, XRControllerState> inputStates = new HashMap<>();
+    private Map<String, XRGwtController> controllers = new HashMap<>();
+    private Map<String, XRControllerState> states = new HashMap<>();
 
-    private ControllerListener listener = DUMMY_CONTROLLER_LISTENER;
+    private Array<ControllerListener> listeners = new Array<>();
 
+    @Override
     public void registerEvents(XRSession session) {
         session.setOninputsourceschange(onInputChanges());
         session.setOnselect(onSelect());
@@ -37,12 +39,29 @@ public class BaseInputHandler implements InputHandler {
         session.setOnsqueezeend(onSqueezeEnd());
     }
 
-    public ControllerListener getListener() {
-        return listener;
+    @Override
+    public Collection<XRGwtController> getControllers() {
+        return controllers.values();
     }
 
-    public void setListener(ControllerListener listener) {
-        this.listener = listener;
+    @Override
+    public Array<ControllerListener> getListeners() {
+        return listeners;
+    }
+
+    @Override
+    public void addListener(ControllerListener listener) {
+        listeners.add(listener);
+    }
+
+    @Override
+    public void removeListener(ControllerListener listener) {
+        listeners.removeValue(listener, true);
+    }
+
+    @Override
+    public void clearListeners() {
+        listeners.clear();
     }
 
     public XRSession.OninputsourceschangeFn onInputChanges() {
@@ -63,32 +82,36 @@ public class BaseInputHandler implements InputHandler {
     }
 
     void addSource(XRInputSource source) {
-        int index = inputSources.size();
+        int index = controllers.size();
         String name = source.getHandedness();
 
         String id = getIdentifier(source);
-        XRController input = new XRController(index, name, source);
-        inputSources.put(id, input);
-        inputStates.put(id, new XRControllerState(input));
+        XRGwtController input = new XRGwtController(index, name, source);
+        controllers.put(id, input);
+        states.put(id, new XRControllerState(input));
 
         input.connected = true;
-        listener.connected(input);
+        for (ControllerListener listener : listeners) {
+            listener.connected(input);
+        }
     }
 
     void removeSource(XRInputSource source) {
-        XRController toRemove = findInput(source);
+        XRGwtController toRemove = findInput(source);
 
         if (toRemove == null) {
             return;
         }
 
         toRemove.connected = false;
-        listener.disconnected(toRemove);
-        inputSources.remove(toRemove);
+        for (ControllerListener listener : listeners) {
+            listener.connected(toRemove);
+        }
+        controllers.remove(toRemove);
     }
 
-    private XRController findInput(XRInputSource source) {
-        for (XRController input : inputSources.values()) {
+    private XRGwtController findInput(XRInputSource source) {
+        for (XRGwtController input : controllers.values()) {
             // Currently, it only removes based on handedness.
             // If for some reason there are two left or right controllers, the last one will overwrite the first one
             if (getIdentifier(input.getInputSource()).equals(getIdentifier(source))) {
@@ -118,10 +141,13 @@ public class BaseInputHandler implements InputHandler {
             public Object onInvoke(Event evt) {
                 XRInputSourceEvent e = XRInputSourceEvent.fromEvent(evt);
 
-                XRController input = findInput(e.inputSource);
+                XRGwtController input = findInput(e.inputSource);
                 if (input != null) {
                     input.trigger = true;
-                    listener.triggerDown(input);
+
+                    for (ControllerListener listener : listeners) {
+                        listener.triggerDown(input);
+                    }
                 }
                 return null;
             }
@@ -134,10 +160,12 @@ public class BaseInputHandler implements InputHandler {
             public Object onInvoke(Event evt) {
                 XRInputSourceEvent e = XRInputSourceEvent.fromEvent(evt);
 
-                XRController input = findInput(e.inputSource);
+                XRGwtController input = findInput(e.inputSource);
                 if (input != null) {
                     input.trigger = false;
-                    listener.triggerUp(input);
+                    for (ControllerListener listener : listeners) {
+                        listener.triggerUp(input);
+                    }
                 }
                 return null;
             }
@@ -159,10 +187,12 @@ public class BaseInputHandler implements InputHandler {
             @Override
             public Object onInvoke(Event evt) {
                 XRInputSourceEvent e = XRInputSourceEvent.fromEvent(evt);
-                XRController input = findInput(e.inputSource);
+                XRGwtController input = findInput(e.inputSource);
                 if (input != null) {
                     input.squeeze = true;
-                    listener.squeezeDown(input);
+                    for (ControllerListener listener : listeners) {
+                        listener.squeezeDown(input);
+                    }
                 }
                 return null;
             }
@@ -174,10 +204,12 @@ public class BaseInputHandler implements InputHandler {
             @Override
             public Object onInvoke(Event evt) {
                 XRInputSourceEvent e = XRInputSourceEvent.fromEvent(evt);
-                XRController input = findInput(e.inputSource);
+                XRGwtController input = findInput(e.inputSource);
                 if (input != null) {
                     input.squeeze = false;
-                    listener.squeezeUp(input);
+                    for (ControllerListener listener : listeners) {
+                        listener.squeezeUp(input);
+                    }
                 }
                 return null;
             }
@@ -189,39 +221,43 @@ public class BaseInputHandler implements InputHandler {
      */
     public void updateInputSources(XRSession session, XRFrame frame, XRReferenceSpace refSpace) {
         for (XRInputSource inputSource : session.getInputSources().asList()) {
-            XRController input = findInput(inputSource);
+            XRGwtController input = findInput(inputSource);
             if (input == null) {
                return;
+            }
+
+            String id = getIdentifier(inputSource);
+
+            XRGwtController current = controllers.get(id);
+            XRControllerState controllerState = states.get(id);
+            if (current == null || controllerState == null) {
+                return;
             }
 
             XRSpace targetRaySpace = inputSource.getTargetRaySpace();
             XRPose targetRayPose = frame.getPose(targetRaySpace, refSpace);
 
             Matrix4 transform = MatrixUtils.buildMatrix4(targetRayPose.getTransform().matrix, input.transform);
-            listener.updateTransform(input, transform);
-            handleButtonState(inputSource);
-            handleAxisState(inputSource);
+            for (ControllerListener listener : listeners) {
+                listener.updateTransform(input, transform);
+
+                // This can be very slow with multiple listeners
+                handleButtonState(inputSource, current, controllerState, listener);
+                handleAxisState(inputSource, current, controllerState, listener);
+            }
+
         }
     }
 
-    private void handleButtonState(XRInputSource xrInputSource) {
-        String id = getIdentifier(xrInputSource);
-
-        XRController current = inputSources.get(id);
-        XRControllerState controllerState = inputStates.get(id);
-
-        if (current == null || controllerState == null || listener == null) {
-            return;
-        }
-
+    private void handleButtonState(XRInputSource inputSource, XRGwtController current, XRControllerState controllerState, ControllerListener listener) {
         for (int i = 0; i < controllerState.buttonsPressed.length; i++) {
-            GamepadButton state = xrInputSource.getGamepad().getButtons().getAt(i);
+            GamepadButton buttonState = inputSource.getGamepad().getButtons().getAt(i);
             boolean pressed = controllerState.buttonsPressed[i];
             // Should we handle isTouched?
-            if (state.isPressed() != pressed) {
+            if (buttonState.isPressed() != pressed) {
                 // Update the old state
-                controllerState.buttonsPressed[i] = state.isPressed();
-                if (state.isPressed()) {
+                controllerState.buttonsPressed[i] = buttonState.isPressed();
+                if (buttonState.isPressed()) {
                     listener.buttonDown(current, i);
                 } else {
                     listener.buttonUp(current, i);
@@ -230,78 +266,15 @@ public class BaseInputHandler implements InputHandler {
         }
     }
 
-    private void handleAxisState(XRInputSource xrInputSource) {
-        String id = getIdentifier(xrInputSource);
-
-        XRController current = inputSources.get(id);
-        XRControllerState controllerState = inputStates.get(id);
-
-        if (current == null || controllerState == null || listener == null) {
-            return;
-        }
-
+    private void handleAxisState(XRInputSource xrInputSource, XRGwtController current, XRControllerState controllerState, ControllerListener listener) {
         for (int i = 0; i < controllerState.axes.length; i++) {
             Double value = xrInputSource.getGamepad().getAxes().getAt(i);
             float fValue = value.floatValue();
             float oldValue = controllerState.axes[i];
-            // Should we handle isTouched?
             if (fValue != oldValue) {
                 controllerState.axes[i] = fValue;
                 listener.axisMoved(current, i, fValue);
             }
         }
     }
-
-    private static final ControllerListener DUMMY_CONTROLLER_LISTENER = new ControllerListener() {
-
-        @Override
-        public void connected(Controller controller) {
-
-        }
-
-        @Override
-        public void disconnected(Controller controller) {
-
-        }
-
-        @Override
-        public boolean buttonDown(Controller controller, int buttonCode) {
-            return false;
-        }
-
-        @Override
-        public boolean buttonUp(Controller controller, int buttonCode) {
-            return false;
-        }
-
-        @Override
-        public boolean axisMoved(Controller controller, int axisCode, float value) {
-            return false;
-        }
-
-        @Override
-        public boolean updateTransform(Controller controller, Matrix4 transform) {
-            return false;
-        }
-
-        @Override
-        public boolean triggerDown(Controller controller) {
-            return false;
-        }
-
-        @Override
-        public boolean triggerUp(Controller controller) {
-            return false;
-        }
-
-        @Override
-        public boolean squeezeDown(Controller controller) {
-            return false;
-        }
-
-        @Override
-        public boolean squeezeUp(Controller controller) {
-            return false;
-        }
-    };
 }

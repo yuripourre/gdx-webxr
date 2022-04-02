@@ -5,7 +5,7 @@ import com.badlogic.gdx.backends.gwt.controllers.GwtController;
 import com.badlogic.gdx.math.Matrix4;
 import com.google.gwt.webxr.XRInputSource;
 
-public class XRController extends GwtController {
+public class XRGwtController extends GwtController {
 
     private final XRInputSource inputSource;
 
@@ -13,7 +13,7 @@ public class XRController extends GwtController {
     public boolean squeeze = false;
     public Matrix4 transform = new Matrix4();
 
-    public XRController(int index, String name, XRInputSource inputSource) {
+    public XRGwtController(int index, String name, XRInputSource inputSource) {
         super(index, name, inputSource.getGamepad());
         this.inputSource = inputSource;
     }
