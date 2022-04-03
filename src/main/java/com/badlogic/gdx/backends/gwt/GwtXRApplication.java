@@ -122,7 +122,8 @@ public abstract class GwtXRApplication extends GwtApplication {
 
             // Bind Frame Buffer provided by the XR device
             gl.bindFramebuffer(WebGLRenderingContext.FRAMEBUFFER, glLayer.framebuffer);
-            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+
+            mainLoop();
 
             for (XRView view : pose.getViews().asList()) {
                 XRViewport viewport = glLayer.getViewport(view);
@@ -130,9 +131,11 @@ public abstract class GwtXRApplication extends GwtApplication {
                 gl.viewport(viewport.getX(), viewport.getY(), viewport.getWidth(), viewport.getHeight());
 
                 onView(view, viewport);
+                getApplicationListener().render();
 
-                mainLoop();
             }
+
+            postRender();
         }
 
         // Queue up the next frame
@@ -148,6 +151,8 @@ public abstract class GwtXRApplication extends GwtApplication {
     protected abstract void onFrame(double time, XRSession session, XRFrame frame);
 
     protected void onNoXRDevice() {}
+
+    protected void postRender() {}
 
     @Override
     protected void setupMainLoop() {
@@ -177,7 +182,7 @@ public abstract class GwtXRApplication extends GwtApplication {
         }
         runnablesHelper.clear();
         //graphics.frameId++;
-        getApplicationListener().render();
+        //getApplicationListener().render();
         ((GwtInput) Gdx.input).reset();
     }
 
