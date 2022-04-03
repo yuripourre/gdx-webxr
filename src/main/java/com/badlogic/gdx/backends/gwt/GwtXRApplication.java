@@ -17,26 +17,30 @@ package com.badlogic.gdx.backends.gwt;
  ******************************************************************************/
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
 import com.google.gwt.animation.client.AnimationScheduler;
+import com.google.gwt.webgl.client.WebGLFramebuffer;
 import com.google.gwt.webgl.client.WebGLRenderingContext;
 import com.google.gwt.webxr.WebXRNavigator;
 import com.google.gwt.webxr.XRFrame;
 import com.google.gwt.webxr.XRReferenceSpace;
 import com.google.gwt.webxr.XRRenderStateInit;
 import com.google.gwt.webxr.XRSession;
-import com.google.gwt.webxr.XRSessionMode;
 import com.google.gwt.webxr.XRView;
 import com.google.gwt.webxr.XRViewerPose;
 import com.google.gwt.webxr.XRViewport;
 import com.google.gwt.webxr.XRWebGLLayer;
+
+import java.util.List;
 
 import static elemental2.dom.DomGlobal.document;
 import static elemental2.dom.DomGlobal.navigator;
 
 public abstract class GwtXRApplication extends GwtApplication {
 
-    private WebGLRenderingContext gl;
+    protected static WebGLRenderingContext gl;
+    protected static WebGLFramebuffer currentFrameBuffer;
+    protected static XRViewport currentViewport;
+
     protected WebXRNavigator xrNavigator;
     protected XRReferenceSpace refSpace;
 
@@ -119,31 +123,45 @@ public abstract class GwtXRApplication extends GwtApplication {
 
         if (pose != null) {
             XRWebGLLayer glLayer = session.getRenderState().getBaseLayer();
+            currentFrameBuffer = glLayer.framebuffer;
 
             // Bind Frame Buffer provided by the XR device
-            gl.bindFramebuffer(WebGLRenderingContext.FRAMEBUFFER, glLayer.framebuffer);
+            unbind();
 
             mainLoop();
 
-            for (XRView view : pose.getViews().asList()) {
-                XRViewport viewport = glLayer.getViewport(view);
+            List<XRView> views = pose.getViews().asList();
+            for (int i = 0; i < views.size(); i++) {
+                XRView view = views.get(i);
+
+                currentViewport = glLayer.getViewport(view);
+                XRViewport viewport = currentViewport;
+
                 // Set the viewport based on the XR view
-                gl.viewport(viewport.getX(), viewport.getY(), viewport.getWidth(), viewport.getHeight());
+                resetViewport();
 
                 onView(view, viewport);
                 getApplicationListener().render();
-
             }
 
-            // (Re)Binding the framebuffer after the renders prevents some glitches related to FBO
-            gl.bindFramebuffer(WebGLRenderingContext.FRAMEBUFFER, glLayer.framebuffer);
             postRender();
+
+            // (Re)Binding the framebuffer after the renders prevents some glitches related to FBO
+            //unbind();
         }
 
         // Queue up the next frame
         session.requestAnimationFrame((timestamp, xrFrame) -> onXRFrame(timestamp, xrFrame));
 
         onFrame(time, session, frame);
+    }
+
+    public static void unbind() {
+        gl.bindFramebuffer(WebGLRenderingContext.FRAMEBUFFER, currentFrameBuffer);
+    }
+
+    public static void resetViewport() {
+        gl.viewport(currentViewport.getX(), currentViewport.getY(), currentViewport.getWidth(), currentViewport.getHeight());
     }
 
     protected abstract void onSessionStarted(XRSession session);
