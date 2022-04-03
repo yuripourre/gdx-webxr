@@ -135,6 +135,8 @@ public abstract class GwtXRApplication extends GwtApplication {
 
             }
 
+            // (Re)Binding the framebuffer after the renders prevents some glitches related to FBO
+            gl.bindFramebuffer(WebGLRenderingContext.FRAMEBUFFER, glLayer.framebuffer);
             postRender();
         }
 
