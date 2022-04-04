@@ -134,20 +134,18 @@ public abstract class GwtXRApplication extends GwtApplication {
             for (int i = 0; i < views.size(); i++) {
                 XRView view = views.get(i);
 
-                currentViewport = glLayer.getViewport(view);
-                XRViewport viewport = currentViewport;
+                XRViewport viewport = glLayer.getViewport(view);
+                currentViewport = viewport;
 
                 // Set the viewport based on the XR view
-                resetViewport();
+                //resetViewport();
+                gl.viewport(viewport.getX(), viewport.getY(), viewport.getWidth(), viewport.getHeight());
 
                 onView(view, viewport);
                 getApplicationListener().render();
             }
 
             postRender();
-
-            // (Re)Binding the framebuffer after the renders prevents some glitches related to FBO
-            //unbind();
         }
 
         // Queue up the next frame
