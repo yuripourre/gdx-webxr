@@ -35,7 +35,7 @@ import static elemental2.dom.DomGlobal.navigator;
 
 public abstract class GwtXRApplication extends GwtApplication {
 
-    private static boolean sessionActive = false;
+    private static boolean xrSessionActive = false;
 
     protected static WebGLRenderingContext gl;
     protected static WebGLFramebuffer currentFrameBuffer;
@@ -96,7 +96,7 @@ public abstract class GwtXRApplication extends GwtApplication {
     }
 
     private void startSession(XRSession session) {
-        sessionActive = true;
+        xrSessionActive = true;
         final GwtGraphics graphics = (GwtGraphics) Gdx.graphics;
         gl = graphics.getContext();
 
@@ -117,7 +117,7 @@ public abstract class GwtXRApplication extends GwtApplication {
         AnimationScheduler.get().requestAnimationFrame(v -> {});
         session.addEventListener("end", evt -> {
             onSessionEnded(session);
-            sessionActive = false;
+            xrSessionActive = false;
         });
     }
 
@@ -191,13 +191,16 @@ public abstract class GwtXRApplication extends GwtApplication {
                 } catch (Throwable t) {
                     throw new RuntimeException(t);
                 }
-                AnimationScheduler.get().requestAnimationFrame(this, graphics.getContext().getCanvas());
+                // When the xrSession starts, we do not update this anymore
+                if (!xrSessionActive) {
+                    AnimationScheduler.get().requestAnimationFrame(this, graphics.getContext().getCanvas());
+                }
             }
         }, graphics.getContext().getCanvas());
     }
 
     protected void mainLoop () {
-        if (!sessionActive) {
+        if (!xrSessionActive) {
             // Fallback to the original mainLoop method
             super.mainLoop();
             return;
