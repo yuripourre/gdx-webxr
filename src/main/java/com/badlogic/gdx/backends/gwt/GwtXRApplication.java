@@ -30,12 +30,12 @@ import com.google.gwt.webxr.XRViewerPose;
 import com.google.gwt.webxr.XRViewport;
 import com.google.gwt.webxr.XRWebGLLayer;
 
-import java.util.List;
-
 import static elemental2.dom.DomGlobal.document;
 import static elemental2.dom.DomGlobal.navigator;
 
 public abstract class GwtXRApplication extends GwtApplication {
+
+    private static boolean sessionActive = false;
 
     protected static WebGLRenderingContext gl;
     protected static WebGLFramebuffer currentFrameBuffer;
@@ -62,7 +62,7 @@ public abstract class GwtXRApplication extends GwtApplication {
             GwtXRApplicationConfiguration configuration = (GwtXRApplicationConfiguration) config;
             xrNavigator = WebXRNavigator.of(navigator);
             xrNavigator.xr.isSessionSupported(configuration.immersiveMode).then(isSupported -> {
-                document.querySelector("#enter-vr").addEventListener("click", evt -> initXR());
+                document.querySelector(configuration.xrButtonSelector).addEventListener("click", evt -> initXR());
                 return null;
             }, p0 -> {
                 onNoXRDevice();
@@ -96,10 +96,9 @@ public abstract class GwtXRApplication extends GwtApplication {
     }
 
     private void startSession(XRSession session) {
+        sessionActive = true;
         final GwtGraphics graphics = (GwtGraphics) Gdx.graphics;
         gl = graphics.getContext();
-
-        //session.addEventListener("end", onSessionEnded);
 
         XRRenderStateInit state = XRRenderStateInit.create();
         state.setBaseLayer(new XRWebGLLayer(session, gl));
@@ -112,6 +111,13 @@ public abstract class GwtXRApplication extends GwtApplication {
             onSessionStarted(session);
             session.requestAnimationFrame((timestamp, xrFrame) -> onXRFrame(timestamp, xrFrame));
             return null;
+        });
+
+        // Do nothing
+        AnimationScheduler.get().requestAnimationFrame(v -> {});
+        session.addEventListener("end", evt -> {
+            onSessionEnded(session);
+            sessionActive = false;
         });
     }
 
@@ -130,15 +136,13 @@ public abstract class GwtXRApplication extends GwtApplication {
 
             mainLoop();
 
-            // TODO Iterate over the JSArray to avoid conversion penalties
-            List<XRView> views = pose.getViews().asList();
-            for (XRView view : views) {
+            for (int i = 0; i < pose.getViews().length; i++) {
+                XRView view = pose.getViews().getAt(i);
 
                 XRViewport viewport = glLayer.getViewport(view);
                 currentViewport = viewport;
 
                 // Set the viewport based on the XR view
-                //gl.viewport(viewport.getX(), viewport.getY(), viewport.getWidth(), viewport.getHeight());
                 resetViewport();
 
                 onView(view, viewport);
@@ -164,6 +168,8 @@ public abstract class GwtXRApplication extends GwtApplication {
 
     protected abstract void onSessionStarted(XRSession session);
 
+    protected abstract void onSessionEnded(XRSession session);
+
     protected abstract void onView(XRView view, XRViewport viewport);
 
     protected abstract void onFrame(double time, XRSession session, XRFrame frame);
@@ -175,10 +181,11 @@ public abstract class GwtXRApplication extends GwtApplication {
     @Override
     protected void setupMainLoop() {
         final GwtGraphics graphics = (GwtGraphics) Gdx.graphics;
+        gl = graphics.getContext();
 
         AnimationScheduler.get().requestAnimationFrame(new AnimationScheduler.AnimationCallback() {
             @Override
-            public void execute (double timestamp) {
+            public void execute(double timestamp) {
                 try {
                     mainLoop();
                 } catch (Throwable t) {
@@ -190,6 +197,12 @@ public abstract class GwtXRApplication extends GwtApplication {
     }
 
     protected void mainLoop () {
+        if (!sessionActive) {
+            // Fallback to the original mainLoop method
+            super.mainLoop();
+            return;
+        }
+
         GwtGraphics graphics = (GwtGraphics) Gdx.graphics;
         graphics.update();
 
