@@ -1,18 +1,13 @@
 package com.badlogic.gdx.backends.gwt.webxr.input;
 
+import com.badlogic.gdx.backends.gwt.GwtXRApplicationConfiguration;
 import com.badlogic.gdx.backends.gwt.controllers.ControllerListener;
 import com.badlogic.gdx.backends.gwt.controllers.GamepadButton;
 import com.badlogic.gdx.backends.gwt.webxr.MatrixUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Array;
-import com.google.gwt.webxr.XRFrame;
-import com.google.gwt.webxr.XRInputSource;
-import com.google.gwt.webxr.XRInputSourceEvent;
-import com.google.gwt.webxr.XRInputSourcesChangeEvent;
-import com.google.gwt.webxr.XRPose;
-import com.google.gwt.webxr.XRReferenceSpace;
-import com.google.gwt.webxr.XRSession;
-import com.google.gwt.webxr.XRSpace;
+import com.google.gwt.webxr.*;
+import elemental2.core.Float32Array;
 import elemental2.dom.Event;
 
 import java.util.Collection;
@@ -20,12 +15,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static elemental2.dom.DomGlobal.console;
+
 public class XRControllers implements XRControllerManager {
 
     private Map<String, XRGwtController> controllers = new HashMap<>();
     private Map<String, XRControllerState> states = new HashMap<>();
 
     private Array<ControllerListener> listeners = new Array<>();
+
+    // Hand Tracking
+    private boolean handtrackingEnabled = false;
+    private static final Float32Array radii = new Float32Array(25);
+    private static final Float32Array transforms = new Float32Array(16 * 25);
+
+    public XRControllers(GwtXRApplicationConfiguration configuration) {
+        handtrackingEnabled = configuration.optionalFeatures.contains(XRFeatures.HAND_TRACKING, false);
+    }
 
     @Override
     public void registerEvents(XRSession session) {
@@ -237,6 +243,10 @@ public class XRControllers implements XRControllerManager {
             XRSpace targetRaySpace = inputSource.getTargetRaySpace();
             XRPose targetRayPose = frame.getPose(targetRaySpace, refSpace);
 
+            if (handtrackingEnabled) {
+               handleHandTracking(inputSource, frame, refSpace);
+            }
+
             Matrix4 transform = MatrixUtils.buildMatrix4(targetRayPose.getTransform().matrix, input.transform);
             for (ControllerListener listener : listeners) {
                 listener.updateTransform(input, transform);
@@ -245,7 +255,29 @@ public class XRControllers implements XRControllerManager {
                 handleButtonState(inputSource, current, controllerState, listener);
                 handleAxisState(inputSource, current, controllerState, listener);
             }
+        }
+    }
 
+    private void handleHandTracking(XRInputSource inputSource, XRFrame frame, XRReferenceSpace refSpace) {
+        if (inputSource.getHand() == null) {
+            return;
+        }
+
+        if (!frame.fillJointRadii(inputSource.getHand().values(), radii)) {
+            console.log("no fillJointRadii");
+            return;
+        }
+        if (!frame.fillPoses(inputSource.getHand().values(), refSpace, transforms)) {
+            console.log("no fillPoses");
+            return;
+        }
+
+        console.log("position", transforms.asList());
+
+        for (int i = 0; i < transforms.length; i += 16) {
+            for (int j = i; j < i + 16; i++) {
+                console.log("finger " + j, transforms.getAt(j));
+            }
         }
     }
 

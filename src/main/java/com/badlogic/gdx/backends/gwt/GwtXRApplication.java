@@ -136,7 +136,6 @@ public abstract class GwtXRApplication extends GwtApplication {
 
             for (int i = 0; i < pose.getViews().length; i++) {
                 XRView view = pose.getViews().getAt(i);
-
                 XRViewport viewport = glLayer.getViewport(view);
                 currentViewport = viewport;
 

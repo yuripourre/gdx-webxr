@@ -35,6 +35,10 @@ public interface XRInputSource {
   @JsProperty
   String getHandedness();
 
+  // TODO Add this method at the original repo
+  @JsProperty
+  XRHand getHand();
+
   @JsProperty
   JsArray<String> getProfiles();
 

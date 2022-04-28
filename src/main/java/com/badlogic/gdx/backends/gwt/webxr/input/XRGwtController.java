@@ -24,6 +24,22 @@ public class XRGwtController extends GwtController {
         return inputSource;
     }
 
+    public GamepadHapticActuator getActuator() {
+        JsArray<GamepadHapticActuator> actuators = inputSource.getGamepad().getHapticActuators();
+        if (actuators == null || actuators.length == 0) {
+            return null;
+        }
+        return actuators.getAt(0);
+    }
+
+    private boolean hasActuators() {
+        JsArray<GamepadHapticActuator> actuators = inputSource.getGamepad().getHapticActuators();
+        if (actuators == null || actuators.length == 0) {
+            return false;
+        }
+        return true;
+    }
+
     public int getButtonsCount() {
         return inputSource.getGamepad().getButtons().length;
     }
