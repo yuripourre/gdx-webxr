@@ -17,6 +17,7 @@ package com.google.gwt.webxr;
 
 import com.badlogic.gdx.backends.gwt.controllers.Gamepad;
 import elemental2.core.JsArray;
+import elemental2.core.JsMap;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
@@ -30,6 +31,9 @@ public interface XRInputSource {
 
   @JsProperty
   XRSpace getGripSpace();
+
+  @JsProperty
+  JsMap<String, XRJointSpace> getHand();
 
   // TODO Update this method at the original repo
   @JsProperty

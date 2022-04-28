@@ -25,6 +25,7 @@ import com.google.gwt.webxr.XRFrame;
 import com.google.gwt.webxr.XRReferenceSpace;
 import com.google.gwt.webxr.XRRenderStateInit;
 import com.google.gwt.webxr.XRSession;
+import com.google.gwt.webxr.XRSessionInit;
 import com.google.gwt.webxr.XRView;
 import com.google.gwt.webxr.XRViewerPose;
 import com.google.gwt.webxr.XRViewport;
@@ -79,7 +80,9 @@ public abstract class GwtXRApplication extends GwtApplication {
     private void initXR() {
         try {
             GwtXRApplicationConfiguration configuration = (GwtXRApplicationConfiguration) config;
-            xrNavigator.xr.requestSession(configuration.immersiveMode).then(session -> {
+
+            XRSessionInit xrSessionInit = buildSessionConfiguration(configuration);
+            xrNavigator.xr.requestSession(configuration.immersiveMode, xrSessionInit).then(session -> {
                 startSession(session);
                 return null;
             }, error -> {
@@ -92,6 +95,14 @@ public abstract class GwtXRApplication extends GwtApplication {
         } catch (Exception e) {
             onNoXRDevice();
         }
+    }
+
+    private XRSessionInit buildSessionConfiguration(GwtXRApplicationConfiguration configuration) {
+        XRSessionInit xrSessionInit = XRSessionInit.create();
+        xrSessionInit.setOptionalFeatures(configuration.optionalFeatures.toArray());
+        xrSessionInit.setRequiredFeatures(configuration.requiredFeatures.toArray());
+
+        return xrSessionInit;
     }
 
     private void startSession(XRSession session) {

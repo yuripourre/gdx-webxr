@@ -25,6 +25,7 @@ import jsinterop.base.JsPropertyMap;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL)
 public interface XRSessionInit {
+
   @JsOverlay
   static XRSessionInit create() {
     return Js.uncheckedCast(JsPropertyMap.of());

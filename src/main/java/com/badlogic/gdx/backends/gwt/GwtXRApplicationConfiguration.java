@@ -1,5 +1,6 @@
 package com.badlogic.gdx.backends.gwt;
 
+import com.badlogic.gdx.utils.Array;
 import com.google.gwt.webxr.XRSessionMode;
 
 public class GwtXRApplicationConfiguration extends GwtApplicationConfiguration {
@@ -7,6 +8,10 @@ public class GwtXRApplicationConfiguration extends GwtApplicationConfiguration {
     public String immersiveMode = XRSessionMode.IMMERSIVE_VR;
 
     public String xrButtonSelector = "#enter-vr";
+
+    public Array<String> optionalFeatures = new Array<>();
+
+    public Array<String> requiredFeatures = new Array<>();
 
     public GwtXRApplicationConfiguration () {
         this(false);
