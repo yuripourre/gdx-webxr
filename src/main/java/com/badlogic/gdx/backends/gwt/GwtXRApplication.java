@@ -81,7 +81,6 @@ public abstract class GwtXRApplication extends GwtApplication {
             GwtXRApplicationConfiguration configuration = (GwtXRApplicationConfiguration) config;
             xrNavigator.xr.requestSession(configuration.immersiveMode).then(session -> {
                 startSession(session);
-                onSessionStarted(session);
                 return null;
             }, error -> {
                 onNoXRDevice();
