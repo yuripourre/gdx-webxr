@@ -112,7 +112,7 @@ public abstract class GwtXRApplication extends GwtApplication {
             return null;
         });
 
-        // Do nothing
+        // Do not work properly
         /*session.addEventListener("end", evt -> {
             onSessionEnded(session);
             xrSessionActive = false;
@@ -186,7 +186,6 @@ public abstract class GwtXRApplication extends GwtApplication {
         int height = graphics.getHeight();
         Gdx.gl.glViewport(0, 0, width, height);
         getApplicationListener().resize(width, height);
-        getApplicationListener().render();
 
         AnimationScheduler.get().requestAnimationFrame(new AnimationScheduler.AnimationCallback() {
             @Override
@@ -215,7 +214,9 @@ public abstract class GwtXRApplication extends GwtApplication {
         }
         runnablesHelper.clear();
         //graphics.frameId++;
-        //getApplicationListener().render();
+        if (!xrSessionActive) {
+            getApplicationListener().render();
+        }
         ((GwtInput) Gdx.input).reset();
     }
 
