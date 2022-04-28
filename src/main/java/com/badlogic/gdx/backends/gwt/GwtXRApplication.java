@@ -114,11 +114,10 @@ public abstract class GwtXRApplication extends GwtApplication {
         });
 
         // Do nothing
-        AnimationScheduler.get().requestAnimationFrame(v -> {});
-        session.addEventListener("end", evt -> {
+        /*session.addEventListener("end", evt -> {
             onSessionEnded(session);
             xrSessionActive = false;
-        });
+        });*/
     }
 
     public void onXRFrame(double time, XRFrame frame) {
@@ -183,6 +182,13 @@ public abstract class GwtXRApplication extends GwtApplication {
         final GwtGraphics graphics = (GwtGraphics) Gdx.graphics;
         gl = graphics.getContext();
 
+        // This is necessary to fix the current size of the original application
+        int width = graphics.getWidth();
+        int height = graphics.getHeight();
+        Gdx.gl.glViewport(0, 0, width, height);
+        getApplicationListener().resize(width, height);
+        getApplicationListener().render();
+
         AnimationScheduler.get().requestAnimationFrame(new AnimationScheduler.AnimationCallback() {
             @Override
             public void execute(double timestamp) {
@@ -200,12 +206,6 @@ public abstract class GwtXRApplication extends GwtApplication {
     }
 
     protected void mainLoop () {
-        if (!xrSessionActive) {
-            // Fallback to the original mainLoop method
-            super.mainLoop();
-            return;
-        }
-
         GwtGraphics graphics = (GwtGraphics) Gdx.graphics;
         graphics.update();
 
