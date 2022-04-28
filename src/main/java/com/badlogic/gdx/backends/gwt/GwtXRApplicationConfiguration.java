@@ -6,6 +6,8 @@ public class GwtXRApplicationConfiguration extends GwtApplicationConfiguration {
 
     public String immersiveMode = XRSessionMode.IMMERSIVE_VR;
 
+    public String xrButtonSelector = "#enter-vr";
+
     public GwtXRApplicationConfiguration () {
         this(false);
     }
