@@ -19,6 +19,7 @@ import static elemental2.dom.DomGlobal.console;
 
 public class XRControllers implements XRControllerManager {
 
+    public static final int NUM_FINGERS = 25;
     private Map<String, XRGwtController> controllers = new HashMap<>();
     private Map<String, XRControllerState> states = new HashMap<>();
 
@@ -244,7 +245,7 @@ public class XRControllers implements XRControllerManager {
             XRPose targetRayPose = frame.getPose(targetRaySpace, refSpace);
 
             if (handtrackingEnabled) {
-               handleHandTracking(inputSource, frame, refSpace);
+               handleHandTracking(inputSource, frame, refSpace, controllerState);
             }
 
             Matrix4 transform = MatrixUtils.buildMatrix4(targetRayPose.getTransform().matrix, input.transform);
@@ -258,9 +259,14 @@ public class XRControllers implements XRControllerManager {
         }
     }
 
-    private void handleHandTracking(XRInputSource inputSource, XRFrame frame, XRReferenceSpace refSpace) {
+    private void handleHandTracking(XRInputSource inputSource, XRFrame frame, XRReferenceSpace refSpace, XRControllerState controllerState) {
         if (inputSource.getHand() == null) {
             return;
+        } else if (controllerState.joints == null) {
+            controllerState.joints = new Matrix4[NUM_FINGERS];
+            for (int m = 0; m < NUM_FINGERS; m++) {
+                controllerState.joints[m] = new Matrix4();
+            }
         }
 
         if (!frame.fillJointRadii(inputSource.getHand().values(), radii)) {
@@ -274,11 +280,18 @@ public class XRControllers implements XRControllerManager {
 
         console.log("position", transforms.asList());
 
-        for (int i = 0; i < transforms.length; i += 16) {
-            for (int j = i; j < i + 16; i++) {
+        for (int m = 0; m < NUM_FINGERS; m++) {
+            Matrix4 matrix = controllerState.joints[m];
+            MatrixUtils.buildMatrix4(transforms, m * 16, matrix);
+
+            console.log("XRControllers", "finger[" + m + "]: " + matrix);
+        }
+
+        /*for (int i = 0; i < transforms.length; i += 16) {
+            for (int j = i; j < i + 16; j++) {
                 console.log("finger " + j, transforms.getAt(j));
             }
-        }
+        }*/
     }
 
     private void handleButtonState(XRInputSource inputSource, XRGwtController current, XRControllerState controllerState, ControllerListener listener) {

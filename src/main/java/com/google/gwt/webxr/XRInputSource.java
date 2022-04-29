@@ -26,7 +26,8 @@ import jsinterop.annotations.JsType;
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL)
 public interface XRInputSource {
-  @JsProperty Gamepad getGamepad();
+  @JsProperty
+  Gamepad getGamepad();
 
   @JsProperty
   XRSpace getGripSpace();
