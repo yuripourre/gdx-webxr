@@ -4,6 +4,7 @@ import com.badlogic.gdx.backends.gwt.controllers.GamepadButton;
 import com.badlogic.gdx.backends.gwt.controllers.GamepadHapticActuator;
 import com.badlogic.gdx.backends.gwt.controllers.GwtController;
 import com.badlogic.gdx.math.Matrix4;
+import com.google.gwt.webxr.XRHand;
 import com.google.gwt.webxr.XRInputSource;
 import elemental2.core.JsArray;
 
@@ -59,6 +60,10 @@ public class XRGwtController extends GwtController {
             return false;
         }
         return true;
+    }
+
+    public XRHand getHand() {
+        return inputSource.getHand();
     }
 
 }

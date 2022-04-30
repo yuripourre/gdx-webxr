@@ -6,5 +6,4 @@ import jsinterop.annotations.JsType;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL)
 public class XRHand extends JsMap<String, XRJointSpace> {
-
 }
