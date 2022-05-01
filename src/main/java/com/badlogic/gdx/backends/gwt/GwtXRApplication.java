@@ -178,7 +178,7 @@ public abstract class GwtXRApplication extends GwtApplication {
     @Override
     protected void setupMainLoop() {
         final GwtGraphics graphics = (GwtGraphics) Gdx.graphics;
-        gl = graphics.getContext();
+        //gl = graphics.getContext();
 
         // This is necessary to fix the current size of the original application
         int width = graphics.getWidth();

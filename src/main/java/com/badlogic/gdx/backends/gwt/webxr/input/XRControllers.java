@@ -276,25 +276,13 @@ public class XRControllers implements XRControllerManager {
             }
         }
 
-        // TODO This is might not work
+        // TODO This is not working
         // TODO Maybe we need to use a mutable list instead of .values() <JsIterable>
-        /*if (!frame.fillJointRadii(inputSource.getHand().values(), radii)) {
+        if (!frame.fillJointRadii(inputSource.getHand().values(), radii)) {
             console.log("no fillJointRadii");
             return;
         }
         if (!frame.fillPoses(inputSource.getHand().values(), refSpace, transforms)) {
-            console.log("no fillPoses");
-            return;
-        }*/
-
-        JsArray<XRJointSpace> jointSpaces = new JsArray<>(1);
-        jointSpaces.push(inputSource.getHand().get(XRHandJoint.WRIST.key()));
-
-        if (!frame.fillJointRadii(jointSpaces, radii)) {
-            console.log("no fillJointRadii");
-            return;
-        }
-        if (!frame.fillPoses(jointSpaces, refSpace, transforms)) {
             console.log("no fillPoses");
             return;
         }

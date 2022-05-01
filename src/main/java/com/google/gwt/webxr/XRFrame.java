@@ -16,7 +16,6 @@
 package com.google.gwt.webxr;
 
 import elemental2.core.Float32Array;
-import elemental2.core.JsArray;
 import elemental2.core.JsIteratorIterable;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
@@ -33,7 +32,7 @@ public interface XRFrame {
 
   XRJointPose getJointPose(XRJointSpace joint, XRSpace baseSpace);
 
-  boolean fillJointRadii(JsArray<XRJointSpace> jointSpaces, Float32Array radii);
+  boolean fillJointRadii(JsIteratorIterable<XRJointSpace> jointSpaces, Float32Array radii);
 
-  boolean fillPoses(JsArray<XRJointSpace> jointSpaces, XRSpace baseSpace, Float32Array transforms);
+  boolean fillPoses(JsIteratorIterable<XRJointSpace> jointSpaces, XRSpace baseSpace, Float32Array transforms);
 }

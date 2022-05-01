@@ -6,7 +6,7 @@
 
     <groupId>com.harium.gdx</groupId>
     <artifactId>webxr</artifactId>
-    <version>0.0.13-HAND</version>
+    <version>0.0.14-HAND</version>
     <packaging>jar</packaging>
     <name>GDX WebXR</name>
     <description>A WebXR implementation for libGDX</description>
