@@ -272,32 +272,39 @@ public class XRControllers implements XRControllerManager {
         } else if (controllerState.joints == null) {
             controllerState.joints = new Matrix4[NUM_FINGERS];
             for (int m = 0; m < NUM_FINGERS; m++) {
-                controllerState.joints[m] = new Matrix4();
+                Matrix4 matrix = new Matrix4();
+                controllerState.joints[m] = matrix;
+            }
+
+            // TODO NO IDEA IF IT WORKS
+            for (XRHandJoint joint : XRHandJoint.values()) {
+                int i = joint.index();
+                XRRigidTransform transform = frame.getPose(inputSource.getHand().get(joint.key()), refSpace).getTransform();
+                Matrix4 matrix = controllerState.joints[i];
+                MatrixUtils.buildMatrix4(transform.matrix, matrix);
             }
         }
 
         // TODO This is not working
         // TODO Maybe we need to use a mutable list instead of .values() <JsIterable>
-        if (!frame.fillJointRadii(inputSource.getHand().values(), radii)) {
+        /*if (!frame.fillJointRadii(inputSource.getHand().values(), radii)) {
             console.log("no fillJointRadii");
             return;
         }
         if (!frame.fillPoses(inputSource.getHand().values(), refSpace, transforms)) {
             console.log("no fillPoses");
             return;
-        }
+        }*/
 
         //console.log("position", transforms.asList());
-
-        for (int m = 0; m < NUM_FINGERS; m++) {
+        /*for (int m = 0; m < NUM_FINGERS; m++) {
             Matrix4 matrix = controllerState.joints[m];
             MatrixUtils.buildMatrix4(transforms, m * 16, matrix);
-        }
+        }*/
 
         for (ControllerListener listener : listeners) {
             listener.updateHand(current, controllerState.joints);
         }
-
 
         /*for (int i = 0; i < transforms.length; i += 16) {
             for (int j = i; j < i + 16; j++) {
@@ -308,7 +315,7 @@ public class XRControllers implements XRControllerManager {
 
     private void handleButtonState(XRInputSource inputSource, XRGwtController current, XRControllerState controllerState, Array<ControllerListener> listeners) {
         for (int i = 0; i < controllerState.buttonsPressed.length; i++) {
-            GamepadButton buttonState = inputSource.getGamepad().getButtons().getAt(i);
+            GamepadButton buttonState = inputSource.getGamepad().getButtons()[i];
             boolean pressed = controllerState.buttonsPressed[i];
             // Should we handle isTouched?
             if (buttonState.isPressed() != pressed) {
@@ -329,8 +336,8 @@ public class XRControllers implements XRControllerManager {
 
     private void handleAxisState(XRInputSource xrInputSource, XRGwtController current, XRControllerState controllerState, Array<ControllerListener> listeners) {
         for (int i = 0; i < controllerState.axes.length; i++) {
-            Double value = xrInputSource.getGamepad().getAxes().getAt(i);
-            float fValue = value.floatValue();
+            double value = xrInputSource.getGamepad().getAxes()[i];
+            float fValue = (float) value;
             float oldValue = controllerState.axes[i];
             if (fValue != oldValue) {
                 controllerState.axes[i] = fValue;

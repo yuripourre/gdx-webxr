@@ -30,32 +30,32 @@ public class XRGwtController extends GwtController {
     }
 
     public GamepadButton getButtonState(int button) {
-        return inputSource.getGamepad().getButtons().getAt(button);
+        return inputSource.getGamepad().getButtons()[button];
     }
 
     public boolean isButtonTouched(int button) {
-        return inputSource.getGamepad().getButtons().getAt(button).isTouched();
+        return inputSource.getGamepad().getButtons()[button].isTouched();
     }
 
     public void setButtonState(int button, GamepadButton state) {
-        inputSource.getGamepad().getButtons().setAt(button, state);
+        inputSource.getGamepad().getButtons()[button] = state;
     }
 
     public void setAxis(int axis, Double value) {
-        inputSource.getGamepad().getAxes().setAt(axis, value);
+        inputSource.getGamepad().getAxes()[axis] = value;
     }
 
 
     public GamepadHapticActuator getActuator() {
-        JsArray<GamepadHapticActuator> actuators = inputSource.getGamepad().getHapticActuators();
+        GamepadHapticActuator[] actuators = inputSource.getGamepad().getHapticActuators();
         if (actuators == null || actuators.length == 0) {
             return null;
         }
-        return actuators.getAt(0);
+        return actuators[0];
     }
 
     private boolean hasActuators() {
-        JsArray<GamepadHapticActuator> actuators = inputSource.getGamepad().getHapticActuators();
+        GamepadHapticActuator[] actuators = inputSource.getGamepad().getHapticActuators();
         if (actuators == null || actuators.length == 0) {
             return false;
         }
