@@ -20,15 +20,8 @@ import com.badlogic.gdx.Gdx;
 import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.webgl.client.WebGLFramebuffer;
 import com.google.gwt.webgl.client.WebGLRenderingContext;
-import com.google.gwt.webxr.WebXRNavigator;
-import com.google.gwt.webxr.XRFrame;
-import com.google.gwt.webxr.XRReferenceSpace;
-import com.google.gwt.webxr.XRRenderStateInit;
-import com.google.gwt.webxr.XRSession;
-import com.google.gwt.webxr.XRView;
-import com.google.gwt.webxr.XRViewerPose;
-import com.google.gwt.webxr.XRViewport;
-import com.google.gwt.webxr.XRWebGLLayer;
+import com.google.gwt.webxr.*;
+import elemental2.promise.Promise;
 
 import static elemental2.dom.DomGlobal.document;
 import static elemental2.dom.DomGlobal.navigator;
@@ -79,7 +72,18 @@ public abstract class GwtXRApplication extends GwtApplication {
     private void initXR() {
         try {
             GwtXRApplicationConfiguration configuration = (GwtXRApplicationConfiguration) config;
-            xrNavigator.xr.requestSession(configuration.immersiveMode).then(session -> {
+
+            Promise<XRSession> sessionPromise;
+            if (configuration.requiredFeatures == null && configuration.optionalFeatures == null) {
+                sessionPromise = xrNavigator.xr.requestSession(configuration.immersiveMode);
+            } else {
+                XRSessionInit xrSessionInit = XRSessionInit.create();
+                xrSessionInit.setRequiredFeatures(configuration.requiredFeatures);
+                xrSessionInit.setOptionalFeatures(configuration.optionalFeatures);
+                sessionPromise = xrNavigator.xr.requestSession(configuration.immersiveMode, xrSessionInit);
+            }
+
+            sessionPromise.then(session -> {
                 startSession(session);
                 return null;
             }, error -> {

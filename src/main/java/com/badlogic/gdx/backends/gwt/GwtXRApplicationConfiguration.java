@@ -1,6 +1,5 @@
 package com.badlogic.gdx.backends.gwt;
 
-import com.badlogic.gdx.utils.Array;
 import com.google.gwt.webxr.XRSessionMode;
 
 public class GwtXRApplicationConfiguration extends GwtApplicationConfiguration {
@@ -9,9 +8,9 @@ public class GwtXRApplicationConfiguration extends GwtApplicationConfiguration {
 
     public String xrButtonSelector = "#enter-vr";
 
-    public Array<String> optionalFeatures = new Array<>();
+    public String[] optionalFeatures;
 
-    public Array<String> requiredFeatures = new Array<>();
+    public String[] requiredFeatures;
 
     public GwtXRApplicationConfiguration () {
         this(false);
@@ -33,4 +32,27 @@ public class GwtXRApplicationConfiguration extends GwtApplicationConfiguration {
         super(width, height, usePhysicalPixels);
     }
 
+    public boolean hasOptionalFeature(String feature) {
+        return hasFeature(feature, optionalFeatures);
+    }
+
+    public boolean hasRequiredFeature(String feature) {
+        return hasFeature(feature, requiredFeatures);
+    }
+
+    public boolean hasFeature(String feature) {
+        return hasOptionalFeature(feature) || hasRequiredFeature(feature);
+    }
+
+    private boolean hasFeature(String feature, String[] featureList) {
+        if (featureList == null) {
+            return false;
+        }
+        for (String f : featureList) {
+            if (f.equals(feature)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

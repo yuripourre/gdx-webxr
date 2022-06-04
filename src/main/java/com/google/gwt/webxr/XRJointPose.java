@@ -5,7 +5,7 @@ import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL)
-public interface XRJointPose {
+public interface XRJointPose extends XRPose {
     @JsProperty
-    float getRadius();
+    double getRadius();
 }
