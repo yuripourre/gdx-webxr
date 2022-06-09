@@ -95,7 +95,16 @@ public class XRControllers implements XRControllerManager {
         String id = getIdentifier(source);
         XRGwtController input = new XRGwtController(index, name, source);
         controllers.put(id, input);
-        states.put(id, new XRControllerState(input));
+
+        XRControllerState state = new XRControllerState(input);
+        if (handtrackingEnabled) {
+            state.joints = new Matrix4[NUM_FINGERS];
+            for (int i = 0; i < NUM_FINGERS; i++) {
+                state.joints[i] = new Matrix4();
+            }
+        }
+
+        states.put(id, state);
 
         input.connected = true;
         for (ControllerListener listener : listeners) {
@@ -269,13 +278,6 @@ public class XRControllers implements XRControllerManager {
     private void updateHandJoints(XRInputSource inputSource, XRGwtController current, XRControllerState controllerState, XRFrame frame, XRReferenceSpace refSpace, Array<ControllerListener> listeners) {
         if (inputSource.getHand() == null) {
             return;
-        }
-        if (controllerState.joints == null) {
-            controllerState.joints = new Matrix4[NUM_FINGERS];
-            for (int m = 0; m < NUM_FINGERS; m++) {
-                Matrix4 matrix = new Matrix4();
-                controllerState.joints[m] = matrix;
-            }
         }
 
         if (!frame.fillJointRadii(inputSource.getHand().values(), radii)) {
