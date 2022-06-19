@@ -119,11 +119,12 @@ public class XRControllers implements XRControllerManager {
             return;
         }
 
+        String id = getIdentifier(source);
         toRemove.connected = false;
         for (ControllerListener listener : listeners) {
             listener.connected(toRemove);
         }
-        controllers.remove(toRemove);
+        controllers.remove(id);
     }
 
     private XRGwtController findInput(XRInputSource source) {
