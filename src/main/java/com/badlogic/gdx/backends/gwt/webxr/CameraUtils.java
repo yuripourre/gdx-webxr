@@ -21,32 +21,16 @@ public class CameraUtils {
 
     public static void updateCamera(XRView view, XRViewport viewport, PerspectiveCamera camera) {
         tmpOffsetPosition.set(0, 0, 0);
-        updateCamera(view, viewport, camera, tmpOffsetPosition, 0);
+        tmpQuaternionOffset.idt();
+        updateCamera(view, viewport, camera, tmpOffsetPosition, tmpQuaternionOffset);
     }
 
-    public static void updateCamera(XRView view, XRViewport viewport, PerspectiveCamera camera, Vector3 offsetPosition, float offsetYaw) {
+    public static void updateCamera(XRView view, XRViewport viewport, PerspectiveCamera camera, Vector3 offsetPosition, Quaternion offsetRotation) {
         camera.viewportWidth = viewport.getWidth();
         camera.viewportHeight = viewport.getHeight();
 
-        tmpQuaternion.set((float) view.getTransform().orientation.x,
-                (float) view.getTransform().orientation.y,
-                (float) view.getTransform().orientation.z,
-                (float) view.getTransform().orientation.w);
-
-        if (offsetYaw != 0) {
-            tmpQuaternionOffset.setEulerAngles(offsetYaw, 0, 0);
-            tmpQuaternion.add(tmpQuaternionOffset);
-        }
-
-        // Set direction (by default libgdx uses z=-1)
-        camera.direction.set(0, 0, -1).mul(tmpQuaternion);
-
-        tmpPosition.set((float) view.getTransform().position.x,
-                (float) view.getTransform().position.y,
-                (float) view.getTransform().position.z);
-        tmpPosition.add(offsetPosition);
-
-        camera.position.set(tmpPosition);
+        setupCameraDirection(view, camera, offsetRotation);
+        setupCameraPosition(view, camera, offsetPosition);
 
         // I don't know exactly why but if I set z as -1
         // Direction has to be 0, 0, 1 otherwise it doesn't work
@@ -56,7 +40,7 @@ public class CameraUtils {
         Matrix4 projection = buildMatrix4(view.getProjectionMatrix(), tmpMatrix);
 
         float fov = (float) (2 * Math.atan(1/projection.val[5]) * 180 / Math.PI);
-        float aspect = viewport.getWidth() / (float)viewport.getHeight();
+        //float aspect = viewport.getWidth() / (float)viewport.getHeight();
         float near = projection.val[14] / (projection.val[10] - 1.0f);
         float far = projection.val[14] / (projection.val[10] + 1.0f);
         camera.near = near;
@@ -74,6 +58,29 @@ public class CameraUtils {
         camera.invProjectionView.set(camera.combined);
         Matrix4.inv(camera.invProjectionView.val);
         camera.frustum.update(camera.invProjectionView);
+    }
+
+    static void setupCameraPosition(XRView view, PerspectiveCamera camera, Vector3 offsetPosition) {
+        tmpPosition.set((float) view.getTransform().position.x,
+                (float) view.getTransform().position.y,
+                (float) view.getTransform().position.z);
+        tmpPosition.add(offsetPosition);
+
+        camera.position.set(tmpPosition);
+    }
+
+    static void setupCameraDirection(XRView view, PerspectiveCamera camera, Quaternion offsetRotation) {
+        tmpQuaternion.set((float) view.getTransform().orientation.x,
+                (float) view.getTransform().orientation.y,
+                (float) view.getTransform().orientation.z,
+                (float) view.getTransform().orientation.w);
+
+        if (offsetRotation.x != 0 || offsetRotation.y != 0 || offsetRotation.z != 0) {
+            tmpQuaternion.mulLeft(offsetRotation);
+        }
+
+        // Set direction (by default libgdx uses z=-1)
+        camera.direction.set(0, 0, -1).mul(tmpQuaternion);
     }
 
 }

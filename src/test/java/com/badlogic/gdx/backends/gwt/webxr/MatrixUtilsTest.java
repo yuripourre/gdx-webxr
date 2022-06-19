@@ -1,3 +1,5 @@
+package com.badlogic.gdx.backends.gwt.webxr;
+
 import com.badlogic.gdx.backends.gwt.webxr.MatrixUtils;
 import com.badlogic.gdx.math.Matrix4;
 import elemental2.core.Float32Array;
