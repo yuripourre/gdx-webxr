@@ -44,6 +44,14 @@ public interface ControllerListener {
      * @return whether to hand the event to other listeners. */
     boolean updateTransform(Controller controller, Matrix4 transform);
 
+    /** The position of the {@link com.google.gwt.webxr.XRHand} changed. This method is specific for hand tracking.
+     *
+     * @param controller
+     * @param transforms of the hand joints in meters
+     *
+     * @return whether to hand the event to other listeners. */
+    boolean updateHand(Controller controller, Matrix4[] transforms);
+
     /** The trigger on the {@link Controller} was pressed. The trigger is controller specific.
      *
      * @param controller

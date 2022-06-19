@@ -7,12 +7,20 @@ public class MatrixUtils {
 
     // https://www.w3.org/TR/webxr/#matrices
     public static Matrix4 buildMatrix4(Float32Array array, Matrix4 out) {
-        fillArray(array, out.val);
+        return buildMatrix4(array, 0, out);
+    }
+
+    public static Matrix4 buildMatrix4(Float32Array array, int offset, Matrix4 out) {
+        fillArray(array, offset, out.val);
         return out;
     }
 
     public static float[] fillArray(Float32Array matrix, float[] out) {
-        for (int p = 0; p < out.length; p++) {
+        return fillArray(matrix, 0, out);
+    }
+
+    public static float[] fillArray(Float32Array matrix, int offset, float[] out) {
+        for (int p = offset; p < out.length; p++) {
             out[p] = matrix.getAt(p).floatValue();
         }
         return out;

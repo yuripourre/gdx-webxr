@@ -85,7 +85,7 @@ public class GwtController implements Controller {
 
     @Override
     public void startVibration(int duration, float strength) {
-        gamepad.getHapticActuators().getAt(0).pulse(strength, duration);
+        gamepad.getHapticActuators()[0].pulse(strength, duration);
         vibrationEndMs = TimeUtils.millis() + duration;
     }
 

@@ -8,6 +8,10 @@ public class GwtXRApplicationConfiguration extends GwtApplicationConfiguration {
 
     public String xrButtonSelector = "#enter-vr";
 
+    public String[] optionalFeatures;
+
+    public String[] requiredFeatures;
+
     public GwtXRApplicationConfiguration () {
         this(false);
     }
@@ -28,4 +32,27 @@ public class GwtXRApplicationConfiguration extends GwtApplicationConfiguration {
         super(width, height, usePhysicalPixels);
     }
 
+    public boolean hasOptionalFeature(String feature) {
+        return hasFeature(feature, optionalFeatures);
+    }
+
+    public boolean hasRequiredFeature(String feature) {
+        return hasFeature(feature, requiredFeatures);
+    }
+
+    public boolean hasFeature(String feature) {
+        return hasOptionalFeature(feature) || hasRequiredFeature(feature);
+    }
+
+    private boolean hasFeature(String feature, String[] featureList) {
+        if (featureList == null) {
+            return false;
+        }
+        for (String f : featureList) {
+            if (f.equals(feature)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

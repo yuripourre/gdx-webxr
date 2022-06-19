@@ -1,19 +1,16 @@
 package com.badlogic.gdx.backends.gwt.webxr.input;
 
+import com.badlogic.gdx.backends.gwt.GwtXRApplicationConfiguration;
 import com.badlogic.gdx.backends.gwt.controllers.ControllerListener;
 import com.badlogic.gdx.backends.gwt.controllers.GamepadButton;
 import com.badlogic.gdx.backends.gwt.webxr.MatrixUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Array;
-import com.google.gwt.webxr.XRFrame;
-import com.google.gwt.webxr.XRInputSource;
-import com.google.gwt.webxr.XRInputSourceEvent;
-import com.google.gwt.webxr.XRInputSourcesChangeEvent;
-import com.google.gwt.webxr.XRPose;
-import com.google.gwt.webxr.XRReferenceSpace;
-import com.google.gwt.webxr.XRSession;
-import com.google.gwt.webxr.XRSpace;
+import com.google.gwt.webxr.*;
+import elemental2.core.Float32Array;
+import elemental2.core.JsIteratorIterable;
 import elemental2.dom.Event;
+import jsinterop.base.Js;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,10 +19,20 @@ import java.util.Map;
 
 public class XRControllers implements XRControllerManager {
 
+    public static final int NUM_FINGERS = 25;
     private Map<String, XRGwtController> controllers = new HashMap<>();
     private Map<String, XRControllerState> states = new HashMap<>();
 
     private Array<ControllerListener> listeners = new Array<>();
+
+    // Hand Tracking
+    private boolean handtrackingEnabled = false;
+    private static final Float32Array radii = new Float32Array(NUM_FINGERS);
+    private static final Float32Array transforms = new Float32Array(16 * NUM_FINGERS);
+
+    public XRControllers(GwtXRApplicationConfiguration configuration) {
+        handtrackingEnabled = configuration.hasFeature(XRFeatures.HAND_TRACKING);
+    }
 
     @Override
     public void registerEvents(XRSession session) {
@@ -88,7 +95,16 @@ public class XRControllers implements XRControllerManager {
         String id = getIdentifier(source);
         XRGwtController input = new XRGwtController(index, name, source);
         controllers.put(id, input);
-        states.put(id, new XRControllerState(input));
+
+        XRControllerState state = new XRControllerState(input);
+        if (handtrackingEnabled) {
+            state.joints = new Matrix4[NUM_FINGERS];
+            for (int i = 0; i < NUM_FINGERS; i++) {
+                state.joints[i] = new Matrix4();
+            }
+        }
+
+        states.put(id, state);
 
         input.connected = true;
         for (ControllerListener listener : listeners) {
@@ -103,11 +119,12 @@ public class XRControllers implements XRControllerManager {
             return;
         }
 
+        String id = getIdentifier(source);
         toRemove.connected = false;
         for (ControllerListener listener : listeners) {
             listener.connected(toRemove);
         }
-        controllers.remove(toRemove);
+        controllers.remove(id);
     }
 
     private XRGwtController findInput(XRInputSource source) {
@@ -237,43 +254,86 @@ public class XRControllers implements XRControllerManager {
             XRSpace targetRaySpace = inputSource.getTargetRaySpace();
             XRPose targetRayPose = frame.getPose(targetRaySpace, refSpace);
 
-            Matrix4 transform = MatrixUtils.buildMatrix4(targetRayPose.getTransform().matrix, input.transform);
-            for (ControllerListener listener : listeners) {
-                listener.updateTransform(input, transform);
-
+            if (!handtrackingEnabled) {
+                Matrix4 transform = MatrixUtils.buildMatrix4(targetRayPose.getTransform().matrix, input.transform);
+                handleUpdateTransform(input, transform, listeners);
                 // This can be very slow with multiple listeners
-                handleButtonState(inputSource, current, controllerState, listener);
-                handleAxisState(inputSource, current, controllerState, listener);
+                handleButtonState(inputSource, current, controllerState, listeners);
+                handleAxisState(inputSource, current, controllerState, listeners);
+            } else {
+                if (targetRayPose == null) {
+                    return;
+                }
+                // Update hand position
+                updateHandJoints(inputSource, current, controllerState, frame, refSpace, listeners);
             }
-
         }
     }
 
-    private void handleButtonState(XRInputSource inputSource, XRGwtController current, XRControllerState controllerState, ControllerListener listener) {
+    private void handleUpdateTransform(XRGwtController current, Matrix4 matrix4, Array<ControllerListener> listeners) {
+        for (ControllerListener listener : listeners) {
+            listener.updateTransform(current, matrix4);
+        }
+    }
+
+    private void updateHandJoints(XRInputSource inputSource, XRGwtController current, XRControllerState controllerState, XRFrame frame, XRReferenceSpace refSpace, Array<ControllerListener> listeners) {
+        if (inputSource.getHand() == null) {
+            return;
+        }
+
+        if (!frame.fillJointRadii(inputSource.getHand().values(), radii)) {
+            //console.log("no fillJointRadii");
+            return;
+        }
+
+        JsIteratorIterable<XRSpace> values = Js.uncheckedCast(inputSource.getHand().values());
+        if (!frame.fillPoses(values, refSpace, transforms)) {
+            //console.log("no fillPoses");
+            return;
+        }
+
+        for (int m = 0; m < NUM_FINGERS; m++) {
+            Matrix4 matrix = controllerState.joints[m];
+            MatrixUtils.buildMatrix4(transforms, m * 16, matrix);
+        }
+
+        // Notify listeners
+        for (ControllerListener listener : listeners) {
+            listener.updateHand(current, controllerState.joints);
+        }
+    }
+
+    private void handleButtonState(XRInputSource inputSource, XRGwtController current, XRControllerState controllerState, Array<ControllerListener> listeners) {
         for (int i = 0; i < controllerState.buttonsPressed.length; i++) {
-            GamepadButton buttonState = inputSource.getGamepad().getButtons().getAt(i);
+            GamepadButton buttonState = inputSource.getGamepad().getButtons()[i];
             boolean pressed = controllerState.buttonsPressed[i];
             // Should we handle isTouched?
             if (buttonState.isPressed() != pressed) {
                 // Update the old state
                 controllerState.buttonsPressed[i] = buttonState.isPressed();
                 if (buttonState.isPressed()) {
-                    listener.buttonDown(current, i);
+                    for (ControllerListener listener : listeners) {
+                        listener.buttonDown(current, i);
+                    }
                 } else {
-                    listener.buttonUp(current, i);
+                    for (ControllerListener listener : listeners) {
+                        listener.buttonUp(current, i);
+                    }
                 }
             }
         }
     }
 
-    private void handleAxisState(XRInputSource xrInputSource, XRGwtController current, XRControllerState controllerState, ControllerListener listener) {
+    private void handleAxisState(XRInputSource xrInputSource, XRGwtController current, XRControllerState controllerState, Array<ControllerListener> listeners) {
         for (int i = 0; i < controllerState.axes.length; i++) {
-            Double value = xrInputSource.getGamepad().getAxes().getAt(i);
-            float fValue = value.floatValue();
+            double value = xrInputSource.getGamepad().getAxes()[i];
+            float fValue = (float) value;
             float oldValue = controllerState.axes[i];
             if (fValue != oldValue) {
                 controllerState.axes[i] = fValue;
-                listener.axisMoved(current, i, fValue);
+                for (ControllerListener listener : listeners) {
+                    listener.axisMoved(current, i, fValue);
+                }
             }
         }
     }

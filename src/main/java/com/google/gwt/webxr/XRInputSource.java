@@ -26,7 +26,8 @@ import jsinterop.annotations.JsType;
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL)
 public interface XRInputSource {
-  @JsProperty Gamepad getGamepad();
+  @JsProperty
+  Gamepad getGamepad();
 
   @JsProperty
   XRSpace getGripSpace();
@@ -34,6 +35,10 @@ public interface XRInputSource {
   // TODO Update this method at the original repo
   @JsProperty
   String getHandedness();
+
+  // TODO Add this method at the original repo
+  @JsProperty
+  XRHand getHand();
 
   @JsProperty
   JsArray<String> getProfiles();
