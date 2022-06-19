@@ -11,28 +11,41 @@ import static com.badlogic.gdx.backends.gwt.webxr.MatrixUtils.buildMatrix4;
 
 public class CameraUtils {
 
-    static Matrix4 tmpMatrix = new Matrix4();
-    static Quaternion tmpQuaternion = new Quaternion();
-    static Vector3 tmpPosition = new Vector3();
-    static Vector3 tmpUp = new Vector3();
+    private static final Matrix4 tmpMatrix = new Matrix4();
+    private static final Quaternion tmpQuaternion = new Quaternion();
+    private static final Vector3 tmpPosition = new Vector3();
+    private static final Vector3 tmpUp = new Vector3();
+
+    private static final Vector3 tmpOffsetPosition = new Vector3();
+    private static final Quaternion tmpQuaternionOffset = new Quaternion();
 
     public static void updateCamera(XRView view, XRViewport viewport, PerspectiveCamera camera) {
-        //log("Update camera!");
+        tmpOffsetPosition.set(0, 0, 0);
+        updateCamera(view, viewport, camera, tmpOffsetPosition, 0);
+    }
 
+    public static void updateCamera(XRView view, XRViewport viewport, PerspectiveCamera camera, Vector3 offsetPosition, float offsetYaw) {
         camera.viewportWidth = viewport.getWidth();
         camera.viewportHeight = viewport.getHeight();
 
         tmpQuaternion.set((float) view.getTransform().orientation.x,
-                          (float) view.getTransform().orientation.y,
-                          (float) view.getTransform().orientation.z,
-                          (float) view.getTransform().orientation.w);
+                (float) view.getTransform().orientation.y,
+                (float) view.getTransform().orientation.z,
+                (float) view.getTransform().orientation.w);
+
+        if (offsetYaw != 0) {
+            tmpQuaternionOffset.setEulerAngles(offsetYaw, 0, 0);
+            tmpQuaternion.add(tmpQuaternionOffset);
+        }
 
         // Set direction (by default libgdx uses z=-1)
         camera.direction.set(0, 0, -1).mul(tmpQuaternion);
 
         tmpPosition.set((float) view.getTransform().position.x,
-                        (float) view.getTransform().position.y,
-                        (float) view.getTransform().position.z);
+                (float) view.getTransform().position.y,
+                (float) view.getTransform().position.z);
+        tmpPosition.add(offsetPosition);
+
         camera.position.set(tmpPosition);
 
         // I don't know exactly why but if I set z as -1
