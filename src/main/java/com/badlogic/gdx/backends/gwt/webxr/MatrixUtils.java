@@ -25,4 +25,15 @@ public class MatrixUtils {
         }
         return out;
     }
+
+    public static boolean checkEquals(Float32Array matrix, Matrix4 matrix4) {
+        for (int p = 0; p < matrix4.val.length; p++) {
+            float value = matrix.getAt(p).floatValue();
+            // TODO Use a better tolerance
+            if (value != matrix4.val[p]) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
