@@ -6,7 +6,15 @@ import com.badlogic.gdx.backends.gwt.controllers.GamepadButton;
 import com.badlogic.gdx.backends.gwt.webxr.MatrixUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Array;
-import com.google.gwt.webxr.*;
+import com.google.gwt.webxr.XRFeatures;
+import com.google.gwt.webxr.XRFrame;
+import com.google.gwt.webxr.XRInputSource;
+import com.google.gwt.webxr.XRInputSourceEvent;
+import com.google.gwt.webxr.XRInputSourcesChangeEvent;
+import com.google.gwt.webxr.XRPose;
+import com.google.gwt.webxr.XRReferenceSpace;
+import com.google.gwt.webxr.XRSession;
+import com.google.gwt.webxr.XRSpace;
 import elemental2.core.Float32Array;
 import elemental2.core.JsIteratorIterable;
 import elemental2.dom.Event;
@@ -255,8 +263,9 @@ public class XRControllers implements XRControllerManager {
             XRPose targetRayPose = frame.getPose(targetRaySpace, refSpace);
 
             if (!handtrackingEnabled) {
-                Matrix4 transform = MatrixUtils.buildMatrix4(targetRayPose.getTransform().matrix, input.transform);
-                handleUpdateTransform(input, transform, listeners);
+                // Check if transform is not the same
+                //targetRayPose.getTransform().matrix
+                handleUpdateTransform(input, targetRayPose.getTransform().matrix, listeners);
                 // This can be very slow with multiple listeners
                 handleButtonState(inputSource, current, controllerState, listeners);
                 handleAxisState(inputSource, current, controllerState, listeners);
@@ -270,9 +279,13 @@ public class XRControllers implements XRControllerManager {
         }
     }
 
-    private void handleUpdateTransform(XRGwtController current, Matrix4 matrix4, Array<ControllerListener> listeners) {
+    private void handleUpdateTransform(XRGwtController input, Float32Array matrix, Array<ControllerListener> listeners) {
+        if (MatrixUtils.checkEquals(matrix, input.transform)) {
+            return;
+        }
+        Matrix4 transform = MatrixUtils.buildMatrix4(matrix, input.transform);
         for (ControllerListener listener : listeners) {
-            listener.updateTransform(current, matrix4);
+            listener.updateTransform(input, transform);
         }
     }
 
@@ -308,6 +321,7 @@ public class XRControllers implements XRControllerManager {
             GamepadButton buttonState = inputSource.getGamepad().getButtons()[i];
             boolean pressed = controllerState.buttonsPressed[i];
             // Should we handle isTouched?
+            // If pressed state changed
             if (buttonState.isPressed() != pressed) {
                 // Update the old state
                 controllerState.buttonsPressed[i] = buttonState.isPressed();
@@ -329,6 +343,7 @@ public class XRControllers implements XRControllerManager {
             double value = xrInputSource.getGamepad().getAxes()[i];
             float fValue = (float) value;
             float oldValue = controllerState.axes[i];
+            // If axis state changed
             if (fValue != oldValue) {
                 controllerState.axes[i] = fValue;
                 for (ControllerListener listener : listeners) {
