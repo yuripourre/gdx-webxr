@@ -135,6 +135,7 @@ public abstract class GwtXRApplication extends GwtApplication {
 
             // Bind Frame Buffer provided by the XR device
             unbind();
+            onBindBuffer(gl);
 
             mainLoop();
 
@@ -176,6 +177,8 @@ public abstract class GwtXRApplication extends GwtApplication {
     protected abstract void onFrame(double time, XRSession session, XRFrame frame);
 
     protected void onNoXRDevice() {}
+
+    protected void onBindBuffer(WebGLRenderingContext gl) {}
 
     protected void postRender() {}
 
