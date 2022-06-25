@@ -50,7 +50,7 @@ public class CameraUtils {
         //camera.update(true);
         // Extracted from camera.update(true)
         camera.projection.set(projection);
-        camera.view.setToLookAt(camera.position, new Vector3(camera.position).add(camera.direction), tmpUp);
+        camera.view.setToLookAt(camera.position, tmpPosition.set(camera.position).add(camera.direction), tmpUp);
         camera.combined.set(projection);
         Matrix4.mul(camera.combined.val, camera.view.val);
 
